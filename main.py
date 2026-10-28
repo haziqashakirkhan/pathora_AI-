@@ -787,8 +787,11 @@ Respond ONLY with valid JSON.
 """
             async with httpx.AsyncClient(timeout=10.0) as client:
                 res = await client.post(
-                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}",
-                    headers={"Content-Type": "application/json"},
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": GEMINI_API_KEY,
+                    },
                     json={
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"}
@@ -802,7 +805,7 @@ Respond ONLY with valid JSON.
                     concerns = parsed.get("concerns", concerns)
                     recommended_steps = parsed.get("recommended_steps", recommended_steps)
         except Exception as e:
-            logger.warning(f"LLM analysis fallback to deterministic reasoning: {e}")
+            logger.warning("LLM analysis fallback to deterministic reasoning (%s)", type(e).__name__)
 
     return {
         "match_score": deterministic_result["score"],
@@ -1044,6 +1047,45 @@ async def delete_application(opportunity_id: str, user: Dict[str, Any] = Depends
         del memory_store.applications[uid][opportunity_id]
 
     return {"status": "success", "message": "Application record deleted"}
+
+try:
+    import agent_workflow
+    from agent_workflow import AgentWorkflowRequest
+
+    @app.post("/api/agent/workflow")
+    async def run_agent_workflow_endpoint(
+        payload: AgentWorkflowRequest,
+        user: Dict[str, Any] = Depends(get_current_user),
+    ):
+        try:
+            profile_response = await get_profile(user)
+            profile = profile_response.get("profile", {})
+        except Exception as e:
+            logger.warning("Agent profile lookup failed (%s)", type(e).__name__)
+            profile = {}
+
+        async def run_existing_analysis(opportunity, candidate_profile):
+            return await analyze_opportunity(
+                AnalyzeRequestSchema(opportunity=opportunity, profile=candidate_profile)
+            )
+
+        try:
+            return await agent_workflow.run_agent_workflow(
+                request=payload,
+                profile=profile if isinstance(profile, dict) else {},
+                search_fn=search_opportunities,
+                score_fn=compute_match_score,
+                analyze_fn=run_existing_analysis,
+                llm_available=bool(GEMINI_API_KEY),
+            )
+        except Exception as e:
+            logger.warning("Agent workflow failed (%s)", type(e).__name__)
+            raise HTTPException(
+                status_code=503,
+                detail="Agent workflow could not be completed. Please try again later.",
+            ) from e
+except Exception as e:
+    logger.warning("Agent workflow unavailable (%s)", type(e).__name__)
 
 try:
     import chatbot
