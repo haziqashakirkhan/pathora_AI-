@@ -182,8 +182,3 @@ The project is configured for Vercel through `vercel.json`.
 ## Team
 
 Built by Haziqa shkair khan
-
-
-## License
-
-No license has been specified yet. Add a `LICENSE` file to state how others may use this project.
