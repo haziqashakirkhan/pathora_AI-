@@ -181,8 +181,8 @@ The project is configured for Vercel through `vercel.json`.
 
 ## Team
 
-Built by Haziqa, Rameesha, Rohama, Sumaira and Laraib.
-Trainer: Miss Mehwish.
+Built by Haziqa shkair khan
+
 
 ## License
 
