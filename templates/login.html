@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — Pathora AI{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <!-- Subtle Crimson Ambient Glow -->
+  <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+  <div class="app-container">
+    <div class="auth-two-column-layout">
+      
+      <!-- Brand & Value Props Column (Desktop Only) -->
+      <div class="auth-branding-col">
+        <div class="auth-branding-inner">
+          <div class="hero-pill-badge" style="margin-bottom:1.25rem;">
+            <i data-lucide="shield-check" style="width:14px;height:14px; color:var(--tag-green-text);"></i>
+            <span>Secure Cloud Authentication</span>
+          </div>
+
+          <h1 class="auth-branding-heading">
+            Welcome Back to <br><span class="highlight-box">Pathora AI</span>
+          </h1>
+
+          <p class="auth-branding-subtitle">
+            Sign in to access your saved opportunity bookmarks, deterministic eligibility breakdowns, and 7-stage application pipeline.
+          </p>
+
+          <div class="auth-value-props">
+            <div class="auth-value-prop-item">
+              <div class="auth-value-prop-icon">
+                <i data-lucide="bookmark" style="color:var(--tag-green-text);"></i>
+              </div>
+              <div>
+                <strong>Persistent Bookmarks</strong>
+                <p>Pick up right where you left off across all your devices.</p>
+              </div>
+            </div>
+
+            <div class="auth-value-prop-item">
+              <div class="auth-value-prop-icon">
+                <i data-lucide="lock" style="color:var(--tag-amber-text);"></i>
+              </div>
+              <div>
+                <strong>Private &amp; Isolated Data</strong>
+                <p>Enforced Firestore security ensures only you have access to your pipeline.</p>
+              </div>
+            </div>
+
+            <div class="auth-value-prop-item">
+              <div class="auth-value-prop-icon">
+                <i data-lucide="compass" style="color:var(--color-crimson-bright);"></i>
+              </div>
+              <div>
+                <strong>Live Portal Discovery</strong>
+                <p>Indexed across global universities, technology fellowships, and foundations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sign In Form Column -->
+      <div class="auth-form-col">
+        <div class="auth-card">
+          <div class="auth-card-header">
+            <h2 class="auth-card-title">Sign in to your account</h2>
+            <p class="auth-card-desc">Enter your email and password to open your workspace.</p>
+          </div>
+
+          <!-- Alert Container for Feedback -->
+          <div id="login-alert" class="auth-alert" style="display:none;" role="alert"></div>
+
+          <!-- Main Login Form -->
+          <form id="login-form" onsubmit="handleLoginSubmit(event)" novalidate>
+            <!-- Email Address -->
+            <div class="form-group">
+              <label for="login-email" class="form-label">Email Address</label>
+              <div class="input-with-icon">
+                <i data-lucide="mail" class="input-icon" aria-hidden="true"></i>
+                <input 
+                  type="email" 
+                  id="login-email" 
+                  name="email" 
+                  required 
+                  class="form-control" 
+                  placeholder="name@example.com" 
+                  autocomplete="email"
+                >
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                <label for="login-password" class="form-label" style="margin-bottom:0;">Password</label>
+                <button 
+                  type="button" 
+                  class="auth-inline-link" 
+                  onclick="toggleForgotPasswordView(true)"
+                  style="font-size:0.8rem;"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div class="input-with-icon">
+                <i data-lucide="lock" class="input-icon" aria-hidden="true"></i>
+                <input 
+                  type="password" 
+                  id="login-password" 
+                  name="password" 
+                  required 
+                  class="form-control" 
+                  placeholder="Enter your password" 
+                  autocomplete="current-password"
+                >
+                <button 
+                  type="button" 
+                  class="password-toggle-btn" 
+                  onclick="togglePasswordVisibility('login-password', this)"
+                  aria-label="Toggle password visibility"
+                >
+                  <i data-lucide="eye" style="width:16px;height:16px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin:0.85rem 0;">
+              <label style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; color:var(--text-secondary);">
+                <input type="checkbox" id="login-remember" checked style="accent-color:var(--color-crimson-bright); width:15px; height:15px;">
+                <span>Remember this session</span>
+              </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg" style="width:100%;">
+              <span id="login-btn-text">Sign In ✦</span>
+              <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+            </button>
+          </form>
+
+          <!-- Collapsible Password Reset Form -->
+          <div id="reset-password-pane" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-subtle);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+              <strong style="font-size:0.92rem; color:#FFF;">Reset Password</strong>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleForgotPasswordView(false)">Cancel</button>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">
+              Enter your account email to receive a secure password reset link.
+            </p>
+            <div class="form-group">
+              <input type="email" id="reset-email-input" class="form-control" placeholder="name@example.com">
+            </div>
+            <button type="button" id="reset-submit-btn" class="btn btn-secondary btn-sm" onclick="handleSendPasswordReset()" style="width:100%;">
+              <span>Send Password Reset Email</span>
+            </button>
+          </div>
+
+          <!-- Divider -->
+          <div class="auth-divider">
+            <span>or</span>
+          </div>
+
+          <!-- Quick Guest Access -->
+          <button type="button" class="btn btn-secondary" onclick="handleDemoQuickAccess()" style="width:100%;">
+            <i data-lucide="compass" style="width:16px;height:16px;"></i>
+            <span>Continue as Guest (Explore First)</span>
+          </button>
+
+          <!-- Footer Switch Link -->
+          <div class="auth-card-footer">
+            <span>Don't have an account?</span>
+            <a href="/signup" class="auth-link">Create Account →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+

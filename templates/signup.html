@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up — Pathora AI{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <!-- Subtle Crimson Ambient Glow -->
+  <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+  <div class="app-container">
+    <div class="auth-two-column-layout">
+      
+      <!-- Brand & Value Props Column (Desktop Only) -->
+      <div class="auth-branding-col">
+        <div class="auth-branding-inner">
+          <div class="hero-pill-badge" style="margin-bottom:1.25rem;">
+            <i data-lucide="sparkles" style="width:14px;height:14px; color:var(--color-crimson-bright);"></i>
+            <span>Free Candidate Account</span>
+          </div>
+
+          <h1 class="auth-branding-heading">
+            Your Next Step, <br><span class="highlight-box">Made Clearer</span>.
+          </h1>
+
+          <p class="auth-branding-subtitle">
+            Join candidates using Pathora AI to discover verified scholarships, internships, fellowships, and entry-level jobs with deterministic match scoring.
+          </p>
+
+          <div class="auth-value-props">
+            <div class="auth-value-prop-item">
+              <div class="auth-value-prop-icon">
+                <i data-lucide="shield-check" style="color:var(--tag-green-text);"></i>
+              </div>
+              <div>
+                <strong>100% Verified Official Portals</strong>
+                <p>Apply directly to authentic corporate, foundation, and university links.</p>
+              </div>
+            </div>
+
+            <div class="auth-value-prop-item">
+              <div class="auth-value-prop-icon">
+                <i data-lucide="sliders" style="color:var(--tag-blue-text);"></i>
+              </div>
+              <div>
+                <strong>Deterministic 100-Point Match</strong>
+                <p>Transparent eligibility scoring grounded in your education, field, and skills.</p>
+              </div>
+            </div>
+
+            <div class="auth-value-prop-item">
+              <div class="auth-value-prop-icon">
+                <i data-lucide="check-square" style="color:var(--color-crimson-bright);"></i>
+              </div>
+              <div>
+                <strong>7-Stage Application Tracker</strong>
+                <p>Never lose track of deadlines, application notes, or interview rounds.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Form Column -->
+      <div class="auth-form-col">
+        <div class="auth-card">
+          <div class="auth-card-header">
+            <h2 class="auth-card-title">Create your account</h2>
+            <p class="auth-card-desc">Enter your details below to set up your profile and pipeline.</p>
+          </div>
+
+          <!-- Alert Container for Feedback -->
+          <div id="signup-alert" class="auth-alert" style="display:none;" role="alert"></div>
+
+          <form id="signup-form" onsubmit="handleSignupSubmit(event)" novalidate>
+            <!-- Full Name -->
+            <div class="form-group">
+              <label for="signup-name" class="form-label">Full Name</label>
+              <div class="input-with-icon">
+                <i data-lucide="user" class="input-icon" aria-hidden="true"></i>
+                <input 
+                  type="text" 
+                  id="signup-name" 
+                  name="displayName" 
+                  required 
+                  class="form-control" 
+                  placeholder="e.g. Fatima Ali" 
+                  autocomplete="name"
+                >
+              </div>
+            </div>
+
+            <!-- Email Address -->
+            <div class="form-group">
+              <label for="signup-email" class="form-label">Email Address</label>
+              <div class="input-with-icon">
+                <i data-lucide="mail" class="input-icon" aria-hidden="true"></i>
+                <input 
+                  type="email" 
+                  id="signup-email" 
+                  name="email" 
+                  required 
+                  class="form-control" 
+                  placeholder="name@example.com" 
+                  autocomplete="email"
+                >
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+              <label for="signup-password" class="form-label">Password</label>
+              <div class="input-with-icon">
+                <i data-lucide="lock" class="input-icon" aria-hidden="true"></i>
+                <input 
+                  type="password" 
+                  id="signup-password" 
+                  name="password" 
+                  required 
+                  minlength="6"
+                  class="form-control" 
+                  placeholder="At least 6 characters" 
+                  autocomplete="new-password"
+                >
+                <button 
+                  type="button" 
+                  class="password-toggle-btn" 
+                  onclick="togglePasswordVisibility('signup-password', this)"
+                  aria-label="Toggle password visibility"
+                >
+                  <i data-lucide="eye" style="width:16px;height:16px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group">
+              <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+              <div class="input-with-icon">
+                <i data-lucide="lock" class="input-icon" aria-hidden="true"></i>
+                <input 
+                  type="password" 
+                  id="signup-confirm-password" 
+                  name="confirmPassword" 
+                  required 
+                  minlength="6"
+                  class="form-control" 
+                  placeholder="Re-enter password" 
+                  autocomplete="new-password"
+                >
+                <button 
+                  type="button" 
+                  class="password-toggle-btn" 
+                  onclick="togglePasswordVisibility('signup-confirm-password', this)"
+                  aria-label="Toggle confirm password visibility"
+                >
+                  <i data-lucide="eye" style="width:16px;height:16px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="signup-submit-btn" class="btn btn-primary btn-lg" style="width:100%; margin-top:0.5rem;">
+              <span id="signup-btn-text">Create Account ✦</span>
+              <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+            </button>
+          </form>
+
+          <!-- Divider -->
+          <div class="auth-divider">
+            <span>or</span>
+          </div>
+
+          <!-- Quick Guest Access -->
+          <button type="button" class="btn btn-secondary" onclick="handleDemoQuickAccess()" style="width:100%;">
+            <i data-lucide="compass" style="width:16px;height:16px;"></i>
+            <span>Continue as Guest (Explore First)</span>
+          </button>
+
+          <!-- Footer Switch Link -->
+          <div class="auth-card-footer">
+            <span>Already have an account?</span>
+            <a href="/login" class="auth-link">Sign In →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+

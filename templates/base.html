@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pathora AI — The Largest Opportunity Discovery Agent{% endblock %}</title>
+  <meta name="description"
+    content="Pathora AI is an intelligent opportunity discovery and application agent helping students and early-career talent discover internships, scholarships, fellowships, and entry-level programs.">
+
+  <!-- Typography: Manrope (Headings) & Inter (Interface) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css?v=taprefer2026">
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+  <!-- Subtle Technical Background Grid Overlay -->
+  <div class="bg-grid-overlay" aria-hidden="true"></div>
+
+  <!-- Top Announcement Bar (TapRefer Style) -->
+  <div class="top-announcement-bar">
+    <span class="top-announcement-badge">New</span>
+    <span>✦ Live 2026 Student Cohorts, Fellowships &amp; Scholarships are now indexed!</span>
+    <a href="/app" style="color:var(--color-crimson-bright); margin-left:0.4rem; text-decoration:underline;">Explore now
+      →</a>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar" role="banner">
+    <div class="app-container nav-inner">
+      <a href="/" class="brand-link" aria-label="Pathora AI Home">
+        <div class="brand-logo-mark" aria-hidden="true">P</div>
+        <span>Pathora<span class="text-crimson">AI</span></span>
+        <span class="brand-badge">Directory</span>
+      </a>
+
+      <nav class="nav-links" role="navigation" aria-label="Main Navigation">
+        <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}">
+          <i data-lucide="compass" style="width:16px;height:16px;"></i> Home
+        </a>
+        <a href="/app" class="nav-item {% if active_page == 'discover' %}active{% endif %}">
+          <i data-lucide="search" style="width:16px;height:16px;"></i> Programs
+        </a>
+        <a href="/app#tracker" class="nav-item" onclick="if(window.location.pathname==='/app') switchAppTab('tracker')">
+          <i data-lucide="check-square" style="width:16px;height:16px;"></i> Applications
+        </a>
+        <a href="/app#saved" class="nav-item" onclick="if(window.location.pathname==='/app') switchAppTab('saved')">
+          <i data-lucide="bookmark" style="width:16px;height:16px;"></i> Bookmarks
+        </a>
+        <a href="/#why-directory" class="nav-item">
+          <i data-lucide="help-circle" style="width:16px;height:16px;"></i> Why Pathora?
+        </a>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Search icon button -->
+        <a href="/app" class="btn btn-secondary btn-icon-only nav-action-btn" title="Search Directory">
+          <i data-lucide="search" style="width:16px;height:16px;"></i>
+        </a>
+
+        <!-- Authenticated User Group (Visible when logged in) -->
+        <div id="nav-auth-group" style="display:none; align-items:center; gap:0.55rem;">
+          <a href="/app#saved" class="btn btn-secondary btn-icon-only nav-action-btn btn-desktop"
+            onclick="if(window.location.pathname==='/app') switchAppTab('saved')" title="View Bookmarks">
+            <i data-lucide="bookmark" style="width:16px;height:16px;"></i>
+          </a>
+          <button id="user-profile-btn" class="btn btn-secondary btn-sm nav-action-btn btn-desktop"
+            onclick="openProfileModal()" title="View and Edit Profile">
+            <i data-lucide="user" style="width:15px;height:15px;"></i>
+            <span id="nav-profile-label">Profile</span>
+          </button>
+          <button id="nav-signout-btn" class="btn btn-ghost btn-sm nav-action-btn btn-desktop" onclick="handleSignOut()"
+            title="Sign Out">
+            <i data-lucide="log-out" style="width:14px;height:14px;"></i>
+            <span>Log Out</span>
+          </button>
+        </div>
+
+        <!-- Guest / Unauthenticated Group (Visible when logged out) -->
+        <div id="nav-guest-group" style="display:flex; align-items:center; gap:0.55rem;">
+          <a href="/login" class="btn btn-secondary btn-sm nav-action-btn btn-desktop">
+            <span>Log In</span>
+          </a>
+          <a href="/signup" class="btn btn-primary btn-sm nav-action-btn btn-desktop">
+            <span>Sign Up ✦</span>
+          </a>
+        </div>
+
+        <button class="mobile-nav-toggle" id="mobile-nav-toggle-btn" onclick="toggleMobileNav()"
+          aria-label="Toggle Navigation Menu" aria-expanded="false" aria-controls="mobile-nav-menu">
+          <i data-lucide="menu" id="mobile-nav-toggle-icon" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Dropdown & Backdrop -->
+  <div id="mobile-nav-backdrop" class="mobile-nav-backdrop" onclick="toggleMobileNav()" aria-hidden="true"></div>
+  <div id="mobile-nav-menu" class="mobile-nav-menu" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <div class="mobile-nav-inner">
+      <a href="/" class="mobile-nav-link" onclick="toggleMobileNav()">
+        <i data-lucide="compass" style="width:18px;height:18px;"></i> Home
+      </a>
+      <a href="/app" class="mobile-nav-link" onclick="toggleMobileNav()">
+        <i data-lucide="search" style="width:18px;height:18px;"></i> Programs Directory
+      </a>
+      <a href="/app#tracker" class="mobile-nav-link"
+        onclick="toggleMobileNav(); if(window.location.pathname==='/app') switchAppTab('tracker')">
+        <i data-lucide="check-square" style="width:18px;height:18px;"></i> My Applications
+      </a>
+      <a href="/app#saved" class="mobile-nav-link"
+        onclick="toggleMobileNav(); if(window.location.pathname==='/app') switchAppTab('saved')">
+        <i data-lucide="bookmark" style="width:18px;height:18px;"></i> Bookmarks
+      </a>
+      <a href="/#why-directory" class="mobile-nav-link" onclick="toggleMobileNav()">
+        <i data-lucide="help-circle" style="width:18px;height:18px;"></i> Why Pathora?
+      </a>
+
+      <div class="mobile-nav-footer">
+        <!-- Guest Mobile Actions -->
+        <div id="mobile-auth-footer-guest" style="display:flex; gap:0.75rem; width:100%;">
+          <a href="/login" class="btn btn-secondary btn-sm" style="flex:1;" onclick="toggleMobileNav()">Log In</a>
+          <a href="/signup" class="btn btn-primary btn-sm" style="flex:1;" onclick="toggleMobileNav()">Sign Up ✦</a>
+        </div>
+        <!-- Authenticated Mobile Actions -->
+        <div id="mobile-auth-footer-user" style="display:none; gap:0.75rem; width:100%;">
+          <button class="btn btn-secondary btn-sm" onclick="openProfileModal(); toggleMobileNav();" style="flex:1;">
+            <i data-lucide="user" style="width:14px;height:14px;"></i> Profile
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="handleSignOut(); toggleMobileNav();" style="flex:1;">
+            <i data-lucide="log-out" style="width:14px;height:14px;"></i> Log Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main id="main-content" role="main" style="flex:1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Opportunity Detail & AI Match Modal -->
+  <div id="opp-detail-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-opp-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <span id="modal-opp-org" class="opp-meta-org">Organization</span>
+          <h2 id="modal-opp-title" class="opp-title" style="margin-top:0.25rem;">Opportunity Title</h2>
+        </div>
+        <button class="btn btn-ghost btn-icon-only" onclick="closeOppModal()" aria-label="Close dialog">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Badges & Metadata -->
+        <div id="modal-opp-badges" class="opp-badges-row"></div>
+
+        <!-- AI Match & Eligibility Card -->
+        <div class="ai-analysis-box" id="modal-ai-box">
+          <div class="ai-analysis-header">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <i data-lucide="sparkles" style="width:18px;height:18px; color:var(--color-crimson-bright);"></i>
+              <strong style="font-size:0.95rem; color:#FFF;">AI Match &amp; Eligibility Analysis</strong>
+            </div>
+            <div id="modal-ai-score-pill" class="match-score-pill match-uncertain">Calculating...</div>
+          </div>
+          <!-- Animated Score Progress Track -->
+          <div class="match-progress-track" aria-hidden="true">
+            <div id="modal-ai-progress-bar" class="match-progress-fill" style="width:0%;"></div>
+          </div>
+          <div id="modal-ai-insights" class="ai-insights-list">
+            <div class="ai-insight-item uncertain">
+              <i data-lucide="loader" style="width:16px;height:16px;" class="spin"></i>
+              <span>Analyzing opportunity against your profile criteria...</span>
+            </div>
+          </div>
+          <div id="modal-ai-next-steps"
+            style="font-size:0.85rem; color:var(--text-secondary); line-height:1.45; background:var(--bg-card); padding:0.75rem 0.9rem; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+            <strong style="color:#FFF;">Recommended Action:</strong> <span id="modal-ai-next-steps-text">Review the
+              official source link for complete specifications.</span>
+          </div>
+          <div class="ai-disclaimer">
+            Advisory note: Pathora AI match evaluation is assistive. Official portal requirements and deadlines remain
+            authoritative.
+          </div>
+        </div>
+
+        <!-- Description & Details -->
+        <div>
+          <h4 style="font-size:0.95rem; margin-bottom:0.4rem; color:#FFF;">Overview &amp; Requirements</h4>
+          <p id="modal-opp-desc"
+            style="font-size:0.92rem; color:var(--text-secondary); line-height:1.6; white-space:pre-line;">
+            Details will appear here.
+          </p>
+        </div>
+
+        <!-- Source Verification Info -->
+        <div
+          style="background:var(--bg-surface); padding:0.8rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); font-size:0.82rem; color:var(--text-muted);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span><i data-lucide="shield-check"
+                style="width:14px;height:14px;display:inline;vertical-align:middle;color:var(--tag-green-text);"></i>
+              Discovered via live web index</span>
+            <span id="modal-opp-checked">Recently indexed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="modal-save-btn" class="btn btn-secondary btn-sm" onclick="handleModalSave()">
+          <i data-lucide="bookmark" style="width:15px;height:15px;"></i> Save Opportunity
+        </button>
+        <button id="modal-track-btn" class="btn btn-secondary btn-sm" onclick="handleModalTrack()">
+          <i data-lucide="plus-circle" style="width:15px;height:15px;"></i> Add to Tracker
+        </button>
+        <a id="modal-source-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+          <span>Official Portal</span> <i data-lucide="external-link" style="width:14px;height:14px;"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+    <div class="modal-container" style="max-width:580px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="profile-modal-title" style="font-size:1.15rem; color:#FFF;">Candidate Profile</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Your profile grounds Pathora AI's eligibility scoring
+            and recommendations.</p>
+        </div>
+        <button class="btn btn-ghost btn-icon-only" onclick="closeProfileModal()" aria-label="Close dialog">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+
+      <form id="profile-form" onsubmit="handleSaveProfile(event)" class="modal-body">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.85rem;">
+          <div>
+            <label class="filter-label" for="profile-name">Full Name</label>
+            <input type="text" id="profile-name" class="filter-input" placeholder="e.g. Fatima Ali">
+          </div>
+          <div>
+            <label class="filter-label" for="profile-education">Education Level</label>
+            <select id="profile-education" class="filter-select">
+              <option value="Undergraduate">Undergraduate (Bachelors)</option>
+              <option value="Recent Graduate">Recent Graduate</option>
+              <option value="High School">High School</option>
+              <option value="Masters">Master's Degree</option>
+              <option value="PhD">PhD / Doctorate</option>
+              <option value="Self-Taught / Bootcamp">Self-Taught / Bootcamp</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.85rem;">
+          <div>
+            <label class="filter-label" for="profile-field">Field of Study</label>
+            <input type="text" id="profile-field" class="filter-input" placeholder="e.g. Computer Science, Economics">
+          </div>
+          <div>
+            <label class="filter-label" for="profile-country">Country / Location</label>
+            <input type="text" id="profile-country" class="filter-input" placeholder="e.g. Pakistan, United States">
+          </div>
+        </div>
+
+        <div>
+          <label class="filter-label" for="profile-skills">Key Skills (comma separated)</label>
+          <input type="text" id="profile-skills" class="filter-input"
+            placeholder="e.g. Python, SQL, Machine Learning, UI Design, Content">
+        </div>
+
+        <div>
+          <label class="filter-label" for="profile-interests">Interests &amp; Domains</label>
+          <input type="text" id="profile-interests" class="filter-input"
+            placeholder="e.g. Artificial Intelligence, Climate Tech, FinTech">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.85rem;">
+          <div>
+            <label class="filter-label" for="profile-experience">Experience Level</label>
+            <select id="profile-experience" class="filter-select">
+              <option value="Beginner / No Experience">Beginner / No Experience</option>
+              <option value="Early-Career (0-1 yrs)">Early-Career (0-1 yrs)</option>
+              <option value="Intermediate (1-3 yrs)">Intermediate (1-3 yrs)</option>
+            </select>
+          </div>
+          <div>
+            <label class="filter-label" for="profile-work-pref">Work Mode Preference</label>
+            <select id="profile-work-pref" class="filter-select">
+              <option value="Any">Flexible / Any</option>
+              <option value="Remote">Remote Only</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="On-site">On-site</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="filter-label" for="profile-goals">Career Goals (Optional)</label>
+          <input type="text" id="profile-goals" class="filter-input"
+            placeholder="e.g. Land first software engineering internship in summer 2026">
+        </div>
+
+        <div class="modal-footer" style="padding:0.75rem 0 0 0; border:none; background:none;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeProfileModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Authentication Modal (Firebase / Demo Authentication) -->
+  <div id="auth-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-container" style="max-width:440px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="auth-modal-title" style="font-size:1.15rem; color:#FFF;">Sign In to Pathora AI</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Sync your saved opportunities and application tracker
+            across devices.</p>
+        </div>
+        <button class="btn btn-ghost btn-icon-only" onclick="closeAuthModal()" aria-label="Close dialog">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="auth-form" onsubmit="handleAuthSubmit(event)"
+          style="display:flex; flex-direction:column; gap:0.85rem;">
+          <div>
+            <label class="filter-label" for="auth-email">Email Address</label>
+            <input type="email" id="auth-email" required class="filter-input" placeholder="you@example.com">
+          </div>
+          <div>
+            <label class="filter-label" for="auth-password">Password</label>
+            <input type="password" id="auth-password" required class="filter-input" placeholder="••••••••">
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem;">
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; color:var(--text-secondary);">
+              <input type="checkbox" id="auth-create-account"> Create new account
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%; margin-top:0.5rem;"
+            id="auth-submit-btn">
+            Continue with Email ✦
+          </button>
+        </form>
+
+        <div style="display:flex; align-items:center; gap:0.75rem; margin:0.75rem 0;">
+          <hr style="flex:1; border:none; border-top:1px solid var(--border-subtle);">
+          <span style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase;">or</span>
+          <hr style="flex:1; border:none; border-top:1px solid var(--border-subtle);">
+        </div>
+
+        <button class="btn btn-secondary btn-sm" onclick="handleDemoSignIn()" style="width:100%;">
+          <i data-lucide="user-check" style="width:16px;height:16px;"></i> Continue as Guest (Demo Mode)
+        </button>
+
+        <p style="font-size:0.75rem; color:var(--text-dim); text-align:center; margin-top:0.5rem;">
+          Secured with Firebase Authentication. Your application tracking data is isolated and private.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tracker Edit Notes/Status Modal -->
+  <div id="tracker-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tracker-modal-title">
+    <div class="modal-container" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 id="tracker-modal-title" style="font-size:1.15rem; color:#FFF;">Update Application Record</h3>
+        <button class="btn btn-ghost btn-icon-only" onclick="closeTrackerModal()" aria-label="Close dialog">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+
+      <form id="tracker-form" onsubmit="handleSaveTrackerRecord(event)" class="modal-body">
+        <input type="hidden" id="tracker-item-id">
+        <div style="font-size:0.92rem; font-weight:600; color:#FFF;" id="tracker-opp-title">
+          Opportunity Title
+        </div>
+        <div>
+          <label class="filter-label" for="tracker-status-select">Application Pipeline Status</label>
+          <select id="tracker-status-select" class="filter-select">
+            <option value="Interested">Interested</option>
+            <option value="Planning to Apply">Planning to Apply</option>
+            <option value="Applied">Applied</option>
+            <option value="Interview">Interview</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Withdrawn">Withdrawn</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label" for="tracker-app-date">Application Date</label>
+          <input type="date" id="tracker-app-date" class="filter-input">
+        </div>
+        <div>
+          <label class="filter-label" for="tracker-notes">Personal Notes &amp; Checklist</label>
+          <textarea id="tracker-notes" class="filter-input" rows="3"
+            placeholder="e.g. Submitted cover letter, awaiting round 1 technical interview response..."></textarea>
+        </div>
+
+        <div class="modal-footer" style="padding:0.75rem 0 0 0; border:none; background:none;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeTrackerModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Update Status</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Footer (TapRefer Dark Style) -->
+  <footer class="footer" role="contentinfo">
+    <div class="app-container footer-inner">
+      <div style="display:flex; flex-direction:column; gap:0.35rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <div class="brand-logo-mark" style="width:26px;height:26px;font-size:0.85rem;" aria-hidden="true">P</div>
+          <span style="font-weight:700; color:#FFF; font-size:1.05rem;">Pathora AI</span>
+        </div>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Your Next Opportunity Starts Here.</p>
+      </div>
+
+      <div style="font-size:0.8rem; color:var(--text-dim); max-width:520px; text-align:right;">
+        Pathora AI indexes live public opportunities across universities, organizations, and global companies. Deadlines
+        and requirements must always be verified on authoritative official source sites.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Firebase App, Auth & Firestore Web SDK (Official Google CDN Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Pathora AI Authentication & State Service -->
+  <script src="/static/js/auth.js?v=taprefer2026"></script>
+  <!-- Core Frontend Script -->
+  <script src="/static/js/app.js?v=taprefer2026"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+
+</html>

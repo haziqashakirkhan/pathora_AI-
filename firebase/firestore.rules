@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the authenticated user is the document owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection: users can only read and write their own profile
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // User-specific saved opportunities subcollection
+      match /saved_opportunities/{savedId} {
+        allow read, write, delete: if isOwner(userId);
+      }
+
+      // User-specific applications pipeline subcollection
+      match /applications/{applicationId} {
+        allow read, write, delete: if isOwner(userId);
+      }
+    }
+    
+    // Top-level saved opportunities collection with document-level ownership check
+    match /saved_opportunities/{savedId} {
+      allow read, write: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid
+      ) && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Top-level applications collection with document-level ownership check
+    match /applications/{applicationId} {
+      allow read, write: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid
+      ) && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Public cached/normalized opportunities collection: read-only for all visitors
+    // Only backend admin SDK can write/normalize canonical opportunity docs
+    match /opportunities/{opportunityId} {
+      allow read: if true;
+      allow write: if false; // Only written via Firebase Admin SDK backend
+    }
+  }
+}

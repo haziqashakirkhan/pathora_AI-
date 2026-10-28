@@ -1,0 +1,17 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.git/
+.env
+*.json
+!package.json
+!firebase.json
+firebase-service-account*.json
+service-account*.json
+credentials*.json
+tests/
