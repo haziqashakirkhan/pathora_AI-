@@ -1045,6 +1045,13 @@ async def delete_application(opportunity_id: str, user: Dict[str, Any] = Depends
 
     return {"status": "success", "message": "Application record deleted"}
 
+try:
+    import chatbot
+    chatbot.set_search_function(search_opportunities)
+    app.include_router(chatbot.chat_router)
+except Exception as e:
+    logger.warning(f"Chatbot disabled: {e}")
+
 if __name__ == "__main__":
     import uvicorn
     server_port = int(os.getenv("PORT", 8000))
