@@ -6,7 +6,7 @@
 
 An AI-assisted platform that helps students and early-career talent discover scholarships, internships, fellowships, training programs and entry-level jobs, check how well they match, and track every application in one place.
 
-[Live demo](https://pathora-ai-psi.vercel.app) &nbsp;|&nbsp; [Report an issue](https://github.com/haziqashakirkhan/pathora_AI-/issues)
+[Live demo (Production)](https://pathora-mbq4x5ovk-haziqashankhans-projects.vercel.app) &nbsp;|&nbsp; [Report an issue](https://github.com/haziqashakirkhan/pathora_AI-/issues)
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
@@ -255,7 +255,7 @@ The response contains ranked results, deterministic match data, explanation/fall
 
 ## Deployment
 
-The project is configured for Vercel through `vercel.json`. The production site is [pathora-ai-psi.vercel.app](https://pathora-ai-psi.vercel.app).
+The project is configured for Vercel through `vercel.json`. The production site is [Pathora AI (Production)](https://pathora-mbq4x5ovk-haziqashankhans-projects.vercel.app).
 
 1. Import the repository into Vercel.
 2. Add the environment variables from the configuration section in the project settings.
