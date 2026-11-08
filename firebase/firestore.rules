@@ -25,6 +25,17 @@ service cloud.firestore {
       match /applications/{applicationId} {
         allow read, write, delete: if isOwner(userId);
       }
+
+      // User-specific settings & notification preferences subcollection
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // User-specific sent alerts record subcollection
+      match /sent_alerts/{alertId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Only written via Firebase Admin SDK backend
+      }
     }
     
     // Top-level saved opportunities collection with document-level ownership check

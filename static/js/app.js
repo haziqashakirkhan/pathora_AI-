@@ -15,9 +15,10 @@ const state = {
     interests: ["Software Engineering", "Artificial Intelligence"],
     experienceLevel: "Beginner / No Experience",
     workPreference: "Flexible / Any",
-    preferredOpportunityTypes: ["Internship", "Scholarship", "Entry-level Job"],
-    careerGoals: "Secure a competitive summer 2026 internship"
+    preferredOpportunityTypes: ["Internship", "Scholarship", "Training Program", "Fellowship"],
+    careerGoals: "Secure a competitive student opportunity in 2026"
   },
+  countryFilter: "All", // "All", "Pakistan", "International"
   opportunities: [],
   filteredOpportunities: [],
   savedOpportunities: new Map(), // id -> opp
@@ -340,6 +341,20 @@ function initUrlParameters() {
   }
 }
 
+function setCountryFilter(countryVal) {
+  state.countryFilter = countryVal || "All";
+  const buttons = document.querySelectorAll(".country-filter-pill");
+  buttons.forEach(btn => {
+    if (btn.getAttribute("data-country") === state.countryFilter) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+  executeLiveSearch();
+}
+window.setCountryFilter = setCountryFilter;
+
 async function executeLiveSearch(forceRefresh = false) {
   const container = document.getElementById("opp-results-container");
   const searchInput = document.getElementById("workspace-search-input");
@@ -365,6 +380,7 @@ async function executeLiveSearch(forceRefresh = false) {
   if (location) params.append("location", location);
   if (workMode) params.append("work_mode", workMode);
   if (education) params.append("education", education);
+  if (state.countryFilter) params.append("country", state.countryFilter);
   if (selectedCats.length > 0 && selectedCats.length < 6) {
     selectedCats.forEach(c => params.append("category", c));
   }
@@ -394,7 +410,7 @@ async function executeLiveSearch(forceRefresh = false) {
     }
 
     // Deterministically score each opportunity against user profile
-    recalculateAllMatchScores();
+    await recalculateAllMatchScores();
     applyFilters();
 
   } catch (err) {
@@ -416,15 +432,8 @@ async function executeLiveSearch(forceRefresh = false) {
   }
 }
 
-// --- Deterministic Matching Engine ---
+// --- Authoritative Deterministic Matching Engine ---
 function calculateDeterministicMatch(opp, profile) {
-  // Configurable Factor Weights: Total = 100
-  // 1. Education (25 pts)
-  // 2. Field of study & Skills (30 pts)
-  // 3. Experience level (15 pts)
-  // 4. Work Mode & Location (15 pts)
-  // 5. Category Preference (15 pts)
-
   let score = 0;
   const factors = {
     education: { score: 0, max: 25, label: "Education" },
@@ -437,84 +446,103 @@ function calculateDeterministicMatch(opp, profile) {
   const missingInfo = [];
   const positiveNotes = [];
   const cautionNotes = [];
+  const matchedSkills = [];
+  const matchedInterests = [];
+  let isEduIneligible = false;
+  let isExpIneligible = false;
+  let isLocIneligible = false;
 
-  const oppText = `${opp.title || ""} ${opp.description || ""} ${opp.educationRequirements || ""} ${opp.experienceRequirements || ""}`.toLowerCase();
+  const oppText = `${opp.title || ""} ${opp.description || ""} ${opp.educationRequirements || ""} ${opp.organization || ""} ${opp.location || ""}`.toLowerCase();
 
-  // 1. Education evaluation
-  if (!profile.educationLevel) {
+  // 1. Education
+  const userEdu = (profile.educationLevel || "").trim().toLowerCase();
+  if (!userEdu) {
     missingInfo.push("Your education level is not specified in profile.");
-  } else {
-    const userEdu = profile.educationLevel.toLowerCase();
-    const reqEdu = (opp.educationRequirements || "").toLowerCase();
-
-    if (!reqEdu || reqEdu.includes("open") || reqEdu.includes("any") || reqEdu.includes("unspecified")) {
-      factors.education.score = 20;
-      positiveNotes.push("Open / flexible education requirements.");
-    } else if (oppText.includes("undergraduate") || oppText.includes("bachelor") || oppText.includes("college student")) {
-      if (userEdu.includes("undergraduate") || userEdu.includes("recent graduate")) {
-        factors.education.score = 25;
-        positiveNotes.push("Matches undergraduate/bachelor candidate status.");
-      } else {
-        factors.education.score = 10;
-        cautionNotes.push(`Listing specifically references undergraduate students (Your profile: ${profile.educationLevel}).`);
-      }
-    } else if (oppText.includes("phd") || oppText.includes("postdoc")) {
-      if (userEdu.includes("phd")) {
-        factors.education.score = 25;
-        positiveNotes.push("Matches doctoral level requirement.");
-      } else {
-        factors.education.score = 0;
-        cautionNotes.push("Listing may require PhD/Doctorate level research qualifications.");
-      }
+    factors.education.score = 0;
+  } else if (oppText.includes("phd") || oppText.includes("doctorate")) {
+    if (userEdu.includes("phd")) {
+      factors.education.score = 25;
+      positiveNotes.push("Matches doctoral level requirement.");
     } else {
-      factors.education.score = 18;
+      factors.education.score = 0;
+      isEduIneligible = true;
+      cautionNotes.push("Listing may require PhD/Doctorate level research qualifications.");
     }
+  } else if (oppText.includes("masters") || oppText.includes("graduate")) {
+    if (userEdu.includes("masters") || userEdu.includes("phd")) {
+      factors.education.score = 25;
+      positiveNotes.push("Matches graduate requirement.");
+    } else if (userEdu.includes("undergraduate")) {
+      factors.education.score = 10;
+      cautionNotes.push(`Listing targets graduate students (Your profile: ${profile.educationLevel}).`);
+    } else {
+      factors.education.score = 5;
+    }
+  } else if (oppText.includes("undergraduate") || oppText.includes("bachelor") || oppText.includes("college student")) {
+    if (userEdu.includes("undergraduate") || userEdu.includes("recent graduate") || userEdu.includes("high school")) {
+      factors.education.score = 25;
+      positiveNotes.push("Matches undergraduate/bachelor candidate status.");
+    } else {
+      factors.education.score = 12;
+    }
+  } else {
+    factors.education.score = 20;
+    positiveNotes.push("Open / flexible education requirements.");
   }
 
-  // 2. Field of study & Skills evaluation
+  // 2. Field & Skills
   const userSkills = Array.isArray(profile.skills) ? profile.skills : [];
-  const userField = profile.fieldOfStudy ? profile.fieldOfStudy.toLowerCase() : "";
-  let matchedSkillsCount = 0;
-  const matchedSkillNames = [];
+  const userField = (profile.fieldOfStudy || "").trim().toLowerCase();
+  const userInterests = Array.isArray(profile.interests) ? profile.interests : [];
 
   if (userField && oppText.includes(userField)) {
-    matchedSkillsCount += 2;
-    positiveNotes.push(`Field of study (${profile.fieldOfStudy}) matches listing focus.`);
+    matchedSkills.push(profile.fieldOfStudy);
+    positiveNotes.push(`Field of study aligns with ${profile.fieldOfStudy}.`);
   }
 
   userSkills.forEach(skill => {
     const s = skill.trim().toLowerCase();
     if (s && s.length > 2 && oppText.includes(s)) {
-      matchedSkillsCount++;
-      matchedSkillNames.push(skill);
+      matchedSkills.push(skill);
     }
   });
 
-  if (matchedSkillsCount >= 3) {
+  userInterests.forEach(interest => {
+    const i = interest.trim().toLowerCase();
+    if (i && i.length > 2 && oppText.includes(i)) {
+      matchedInterests.push(interest);
+    }
+  });
+
+  if (matchedSkills.length >= 3) {
     factors.skills.score = 30;
-    positiveNotes.push(`Strong skills alignment (${matchedSkillNames.slice(0, 3).join(", ")}).`);
-  } else if (matchedSkillsCount === 2) {
+    positiveNotes.push(`Strong skills alignment (${matchedSkills.slice(0, 3).join(", ")}).`);
+  } else if (matchedSkills.length === 2) {
     factors.skills.score = 22;
-    positiveNotes.push(`Good overlap with required skills (${matchedSkillNames.join(", ")}).`);
-  } else if (matchedSkillsCount === 1) {
-    factors.skills.score = 15;
-    positiveNotes.push(`Partial skill match found (${matchedSkillNames[0]}).`);
+    positiveNotes.push(`Good overlap with required skills (${matchedSkills.join(", ")}).`);
+  } else if (matchedSkills.length === 1) {
+    factors.skills.score = 14;
+    positiveNotes.push(`Found skill match for ${matchedSkills[0]}.`);
+  } else if (matchedInterests.length > 0) {
+    factors.skills.score = 10;
+    positiveNotes.push(`Domain alignment with ${matchedInterests.slice(0, 2).join(", ")}.`);
   } else {
-    factors.skills.score = 6;
-    if (userSkills.length === 0) {
+    factors.skills.score = 0;
+    if (userSkills.length === 0 && !userField) {
       missingInfo.push("No skills listed on your profile to verify alignment.");
     } else {
       cautionNotes.push("No explicit keyword match between your profile skills and listing excerpt.");
     }
   }
 
-  // 3. Experience level evaluation
-  const userExp = (profile.experienceLevel || "").toLowerCase();
-  if (opp.category === "Internship" || opp.category === "Training Program" || opp.category === "Scholarship") {
+  // 3. Experience
+  const cat = opp.category || "";
+  if (cat === "Internship" || cat === "Training Program" || cat === "Scholarship" || cat === "Competition" || cat === "Fellowship" || cat === "Research") {
     factors.experience.score = 15;
     positiveNotes.push("Opportunity is designed for early-career/student applicants.");
   } else if (oppText.includes("senior") || oppText.includes("5+ years") || oppText.includes("lead")) {
-    factors.experience.score = 2;
+    factors.experience.score = 0;
+    isExpIneligible = true;
     cautionNotes.push("Listing indicates requirements for senior/experienced roles.");
   } else {
     factors.experience.score = 12;
@@ -522,38 +550,66 @@ function calculateDeterministicMatch(opp, profile) {
 
   // 4. Work Mode & Location
   const userMode = profile.workPreference || "Any";
-  const oppMode = opp.workMode || "Unspecified";
+  const oppMode = opp.workMode || "Flexible";
+  const userCountry = (profile.country || "Pakistan").trim().toLowerCase();
+  const oppCountry = (opp.country || "Pakistan").trim().toLowerCase();
 
-  if (userMode === "Any" || oppMode.toLowerCase() === "remote") {
-    factors.workMode.score = 15;
-    if (oppMode.toLowerCase() === "remote") {
-      positiveNotes.push("Remote opportunity matches flexible work preference.");
-    }
-  } else if (userMode.toLowerCase() === oppMode.toLowerCase()) {
-    factors.workMode.score = 15;
-    positiveNotes.push(`Work mode (${oppMode}) matches your preference.`);
+  if ((oppText.includes("us citizens only") || oppText.includes("uk residents only")) && userCountry === "pakistan") {
+    isLocIneligible = true;
+    factors.workMode.score = 0;
+    cautionNotes.push("Listing restricts eligibility to domestic residents of host nation.");
   } else {
-    factors.workMode.score = 8;
-    cautionNotes.push(`Work mode is ${oppMode}; your preference is ${userMode}.`);
-  }
+    if (opp.isPakistani || oppCountry === "pakistan") {
+      factors.workMode.score += 10;
+      positiveNotes.push("Offered by a verified Pakistani institution / initiative.");
+    } else if (oppMode.toLowerCase() === "remote" || oppText.includes("global") || oppText.includes("international") || oppText.includes("pakistan")) {
+      factors.workMode.score += 10;
+      positiveNotes.push("Global/remote accessibility accommodates Pakistani applicants.");
+    } else {
+      factors.workMode.score += 5;
+    }
 
-  // 5. Category Preference
+    if (userMode === "Any" || oppMode.toLowerCase() === "remote") {
+      factors.workMode.score = Math.min(15, factors.workMode.score + 5);
+    } else if (userMode.toLowerCase() === oppMode.toLowerCase()) {
+      factors.workMode.score = Math.min(15, factors.workMode.score + 5);
+      positiveNotes.push(`Matches preferred work mode (${oppMode}).`);
+    } else {
+      cautionNotes.push(`Work mode is ${oppMode}; your preference is ${userMode}.`);
+    }
+  }
+  factors.workMode.score = Math.min(15, Math.max(0, factors.workMode.score));
+
+  // 5. Category
   const preferredCats = profile.preferredOpportunityTypes || [];
-  if (preferredCats.length === 0 || preferredCats.includes(opp.category)) {
+  if (preferredCats.length === 0 || preferredCats.includes(cat)) {
     factors.category.score = 15;
   } else {
-    factors.category.score = 6;
+    factors.category.score = 4;
   }
 
-  // Compute final score
   score = factors.education.score + factors.skills.score + factors.experience.score + factors.workMode.score + factors.category.score;
   score = Math.min(100, Math.max(0, score));
 
-  // Determine classification
+  // Eligibility
+  let eligibility = "Eligible";
+  if (isEduIneligible || isExpIneligible || isLocIneligible) {
+    eligibility = "Not eligible";
+  } else if (missingInfo.length > 0 && (!userEdu || (userSkills.length === 0 && !userField))) {
+    eligibility = "Insufficient information";
+  } else if (score >= 70) {
+    eligibility = "Eligible";
+  } else if (score >= 40) {
+    eligibility = "Potentially eligible";
+  } else {
+    eligibility = "Not eligible";
+  }
+
+  // Classification & Pill
   let classification = "Likely match";
   let pillClass = "match-high";
 
-  if (missingInfo.length > 0 && score < 70) {
+  if (eligibility === "Insufficient information" || (missingInfo.length > 0 && score < 70)) {
     classification = "Insufficient information";
     pillClass = "match-uncertain";
   } else if (score >= 75) {
@@ -570,19 +626,60 @@ function calculateDeterministicMatch(opp, profile) {
   return {
     score,
     classification,
+    eligibility,
     pillClass,
     factors,
     positiveNotes,
     missingInfo,
-    cautionNotes
+    cautionNotes,
+    matchedSkills,
+    matchedInterests
   };
 }
 
-function recalculateAllMatchScores() {
+async function recalculateAllMatchScores() {
+  if (!state.opportunities || state.opportunities.length === 0) return;
+
+  // Attempt authoritative backend batch calculation
+  try {
+    const res = await fetch("/api/opportunities/match-batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        opportunities: state.opportunities,
+        profile: state.profile
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.matches && Array.isArray(data.matches)) {
+        const matchMap = new Map(data.matches.map(m => [m.opportunityId, m]));
+        state.opportunities.forEach(opp => {
+          const m = matchMap.get(opp.id);
+          if (m) {
+            opp.matchScore = m.matchScore;
+            opp.matchAnalysis = {
+              ...m,
+              score: m.matchScore,
+              cautionNotes: m.concerns || [],
+              pillClass: m.matchScore >= 75 ? "match-high" : (m.matchScore >= 50 ? "match-partial" : (m.eligibility === "Insufficient information" ? "match-uncertain" : "match-low"))
+            };
+          }
+        });
+        applyFilters();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("Backend batch match failed, using local deterministic model:", err);
+  }
+
+  // Fallback to local synchronous calculation
   state.opportunities.forEach(opp => {
     opp.matchAnalysis = calculateDeterministicMatch(opp, state.profile);
     opp.matchScore = opp.matchAnalysis.score;
   });
+  applyFilters();
 }
 
 // --- Filters & Sorting ---
@@ -643,6 +740,13 @@ function applySorting() {
   if (!container) return;
 
   state.filteredOpportunities.sort((a, b) => {
+    // In "All" mode, rank Pakistani opportunities first
+    if ((!state.countryFilter || state.countryFilter === "All") && sortVal === "match-desc") {
+      const aPk = a.isPakistani || (a.country && a.country.toLowerCase() === "pakistan");
+      const bPk = b.isPakistani || (b.country && b.country.toLowerCase() === "pakistan");
+      if (aPk && !bPk) return -1;
+      if (!aPk && bPk) return 1;
+    }
     if (sortVal === "match-desc") {
       return (b.matchScore || 0) - (a.matchScore || 0);
     } else if (sortVal === "title-asc") {
@@ -671,6 +775,16 @@ function resetFilters() {
     document.getElementById("filter-match-slider").value = "0";
     document.getElementById("filter-match-val").innerText = "0%";
   }
+  state.countryFilter = "All";
+  const buttons = document.querySelectorAll(".country-filter-pill");
+  buttons.forEach(btn => {
+    if (btn.getAttribute("data-country") === "All") {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
   applyFilters();
   showToast("Filters reset to default", "info");
 }
@@ -714,11 +828,39 @@ function renderOpportunityCardHtml(opp) {
     modeBadge = `<span class="badge badge-mist">Hybrid</span>`;
   }
 
-  // Funding / Perk tag (TapRefer dollar/perk style)
-  let fundingTag = `<span class="badge badge-green"><i data-lucide="dollar-sign" style="width:11px;height:11px;"></i> Stipend / Funding Available</span>`;
-  if (opp.category === "Scholarship") {
-    fundingTag = `<span class="badge badge-green"><i data-lucide="award" style="width:11px;height:11px;"></i> Full / Partial Tuition Grant</span>`;
+  // Country origin badge
+  const isPk = opp.isPakistani || (opp.country && opp.country.toLowerCase() === "pakistan");
+  const countryBadge = isPk
+    ? `<span class="badge badge-green" style="background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.3);"><i data-lucide="map-pin" style="width:11px;height:11px;"></i> Pakistan</span>`
+    : `<span class="badge badge-blue" style="background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);"><i data-lucide="globe" style="width:11px;height:11px;"></i> International (PK Eligible)</span>`;
+
+  // Authenticity & Verification Badge
+  const verifyBadge = opp.verified
+    ? `<span class="badge badge-success" title="Verified official institutional portal"><i data-lucide="shield-check" style="width:11px;height:11px;"></i> Verified Official</span>`
+    : `<span class="badge badge-mist" title="Discovered via public web index"><i data-lucide="info" style="width:11px;height:11px;"></i> Unconfirmed Source</span>`;
+
+  // Status Badge
+  let statusBadge = `<span class="badge badge-green">Open</span>`;
+  if (opp.status === "Closed") {
+    statusBadge = `<span class="badge badge-crimson">Closed</span>`;
+  } else if (opp.status === "Upcoming") {
+    statusBadge = `<span class="badge badge-amber">Upcoming</span>`;
+  } else if (opp.status === "Unconfirmed") {
+    statusBadge = `<span class="badge badge-mist">Unconfirmed</span>`;
   }
+
+  // Eligibility outcome badge
+  let eligibilityBadge = "";
+  if (match.eligibility) {
+    const elClass = match.eligibility === "Eligible" ? "badge-green"
+      : match.eligibility === "Potentially eligible" ? "badge-amber"
+      : match.eligibility === "Insufficient information" ? "badge-mist"
+      : "badge-crimson";
+    eligibilityBadge = `<span class="badge ${elClass}" style="font-size:0.75rem;"><i data-lucide="check" style="width:10px;height:10px;"></i> ${escapeHtml(match.eligibility)}</span>`;
+  }
+
+  // Category badge
+  const categoryBadge = `<span class="badge badge-crimson">${escapeHtml(opp.category || "General")}</span>`;
 
   const domain = extractDomain(opp.officialUrl || opp.sourceUrl);
   const orgInitials = (opp.organization || "O").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
@@ -745,12 +887,15 @@ function renderOpportunityCardHtml(opp) {
       </div>
 
       <div class="opp-badges-row">
-        ${fundingTag}
-        <span class="badge badge-crimson">${escapeHtml(opp.category || "General")}</span>
+        ${countryBadge}
+        ${verifyBadge}
+        ${categoryBadge}
+        ${statusBadge}
         ${modeBadge}
         ${deadlineBadge}
-        <div class="match-score-pill ${match.pillClass}" title="${escapeHtml(match.classification)}">
-          ${match.score}% Match
+        ${eligibilityBadge}
+        <div class="match-score-pill ${match.pillClass}" title="${escapeHtml(match.classification || '')}">
+          ${match.score}% Fit
         </div>
       </div>
 
@@ -766,7 +911,7 @@ function renderOpportunityCardHtml(opp) {
           </a>
           <span>•</span>
           <span style="font-size:0.78rem; color:var(--text-dim);">
-            ${escapeHtml(opp.sourceType === "official" ? "Authoritative Source" : "Public Web Index")}
+            ${escapeHtml(opp.sourceType === "official" ? "Authoritative Portal" : "Public Web Index")}
           </span>
         </div>
 

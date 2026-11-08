@@ -23,6 +23,7 @@ class AgentWorkflowRequest(BaseModel):
     q: str = Field(max_length=250)
     category: list[str] | None = None
     location: str | None = None
+    country: str | None = None
     work_mode: str | None = None
     education: str | None = None
     refresh: bool = False
@@ -116,14 +117,18 @@ def build_agent_graph(
     async def search_opportunities(state: AgentState) -> dict[str, Any]:
         filters = state.get("filters", {})
         try:
-            search_result = await search_fn(
-                q=state["query"],
-                category=filters.get("category"),
-                location=filters.get("location"),
-                work_mode=filters.get("work_mode"),
-                education=filters.get("education"),
-                refresh=filters.get("refresh", False),
-            )
+            search_kwargs = {
+                "q": state["query"],
+                "category": filters.get("category"),
+                "location": filters.get("location"),
+                "work_mode": filters.get("work_mode"),
+                "education": filters.get("education"),
+                "refresh": filters.get("refresh", False),
+            }
+            if filters.get("country") is not None:
+                search_kwargs["country"] = filters["country"]
+
+            search_result = await search_fn(**search_kwargs)
             if not isinstance(search_result, dict) or not isinstance(search_result.get("opportunities"), list):
                 raise ValueError("Invalid search response")
             opportunities = [

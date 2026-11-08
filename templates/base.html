@@ -4,9 +4,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Pathora AI — The Largest Opportunity Discovery Agent{% endblock %}</title>
+  <title>{% block title %}Pathora AI — Pakistan's AI-Powered Student Opportunity Discovery Platform{% endblock %}
+  </title>
   <meta name="description"
-    content="Pathora AI is an intelligent opportunity discovery and application agent helping students and early-career talent discover internships, scholarships, fellowships, and entry-level programs.">
+    content="Pathora AI helps Pakistani students discover authentic government scholarships (HEC, PEEF), free IT bootcamps (DigiSkills, Saylani), tech hackathons, and international fellowships with deterministic match scoring.">
+  <meta name="keywords"
+    content="Scholarships in Pakistan, HEC scholarships, Pakistani student internships, Pakistan hackathons, DigiSkills, Saylani Mass IT Training, Bano Qabil, international scholarships for Pakistani students">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://pathora-ai-psi.vercel.app{{ request.url.path if request else '/' }}">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pathora-ai-psi.vercel.app{{ request.url.path if request else '/' }}">
+  <meta property="og:title" content="Pathora AI — Student Opportunity Discovery Directory">
+  <meta property="og:description"
+    content="Discover authentic scholarships, IT training bootcamps, internships, and hackathons in Pakistan and worldwide.">
+  <meta property="og:site_name" content="Pathora AI">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pathora AI — Opportunity Discovery for Pakistani Students">
+  <meta name="twitter:description"
+    content="Pakistan-first opportunity discovery platform. Verified HEC scholarships, NAVTTC/DigiSkills bootcamps, and global internships.">
 
   <!-- Typography: Manrope (Headings) & Inter (Interface) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,10 +39,54 @@
 
   <!-- Application Stylesheet -->
   <link rel="stylesheet" href="/static/css/style.css?v=taprefer2026">
+  <style>
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 10px;
+      background: var(--color-crimson);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      z-index: 10000;
+      transition: top 0.2s;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .skip-link:focus {
+      top: 10px;
+    }
+
+    .country-filter-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .country-filter-pill:hover,
+    .country-filter-pill.active {
+      background: rgba(225, 29, 72, 0.15);
+      border-color: var(--color-crimson-bright);
+      color: #FFF;
+      font-weight: 600;
+    }
+  </style>
   {% block extra_head %}{% endblock %}
 </head>
 
 <body>
+  <!-- Accessibility Skip Navigation Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Subtle Technical Background Grid Overlay -->
   <div class="bg-grid-overlay" aria-hidden="true"></div>
 
@@ -312,6 +375,19 @@
           <label class="filter-label" for="profile-goals">Career Goals (Optional)</label>
           <input type="text" id="profile-goals" class="filter-input"
             placeholder="e.g. Land first software engineering internship in summer 2026">
+        </div>
+
+        <!-- Notification Preferences -->
+        <div
+          style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:0.75rem 0.9rem; margin-top:0.5rem;">
+          <label
+            style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; font-size:0.83rem; color:var(--text-secondary); line-height:1.4;">
+            <input type="checkbox" id="profile-notifications" checked
+              style="accent-color:var(--color-crimson-bright); margin-top:2px;">
+            <span><strong>Email Notifications &amp; Inactivity Reminders:</strong> Receive alerts when new verified
+              opportunities match your profile and gentle reminders after 7 days of application tracker
+              inactivity.</span>
+          </label>
         </div>
 
         <div class="modal-footer" style="padding:0.75rem 0 0 0; border:none; background:none;">

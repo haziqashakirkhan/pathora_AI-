@@ -39,7 +39,7 @@ Pathora AI is a guidance tool. Scores are computed by fixed rules, and the langu
 | Bookmarks | Save opportunities to review later. |
 | Application tracker | Seven statuses: Interested, Planning to Apply, Applied, Interview, Accepted, Rejected, Withdrawn. |
 | Accounts | Sign up and sign in with Firebase Authentication. |
-| AI chatbot (optional) | A floating chat widget that answers questions using the real listings. Disabled unless explicitly enabled. |
+| AI chatbot (optional) | A floating chat widget that answers questions using the real listings, with search-result fallback when Gemini is unavailable. Disabled unless explicitly enabled. |
 
 ## How the match score works
 
@@ -186,9 +186,45 @@ GOOGLE_APPLICATION_CREDENTIALS=path_to_service_account_json
 # Optional AI chatbot (off unless set to true)
 CHATBOT_ENABLED=false
 GEMINI_MODEL=gemini-flash-lite-latest
+
+# Transactional Email Notifications via Resend
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM_EMAIL=Pathora AI <alerts@pathora.ai>
+
+# Security secret for Vercel Cron notification processing
+CRON_SECRET=your_random_secure_cron_secret
 ```
 
 The existing opportunity analyzer currently uses its Gemini model endpoint directly; `GEMINI_MODEL` configures the optional chatbot. Never commit real keys or service-account credentials.
+
+### Email Notifications & Automated Reminders
+
+Pathora AI includes an email notification engine powered by Resend:
+- **New Opportunity Alerts:** Automatically matches newly discovered authentic listings against student profiles and emails eligible candidates (deduplicated by opportunity URL).
+- **7-Day Tracker Inactivity Reminders:** Scans active application pipeline entries (Interested, Planning to Apply, Applied, Interview) and delivers reminders when an application has not received progress updates, notes, or status changes for 7+ days.
+- **Notification Preferences:** Users can toggle email notifications on or off in their profile settings.
+- **Automated Processing:** An external cron runner or Vercel Cron calls `POST /api/cron/process-notifications` with `Authorization: Bearer <CRON_SECRET>` daily at 08:00 UTC.
+
+### Optional chatbot
+
+The chatbot is enabled only when `CHATBOT_ENABLED=true` (case-insensitive). It is disabled by default, so the widget does not appear and the chat endpoint returns 404 when the flag is unset or false.
+
+When enabled, the widget is loaded from `/static/chat-widget.js`. It searches the existing opportunity index, then asks Gemini to answer using up to five matching listings. If Gemini is not configured or a request fails, the API returns a plain-text list of the search results instead.
+
+| Endpoint | Behavior |
+| --- | --- |
+| `GET /api/chat-config` | Reports whether the chatbot is enabled. |
+| `POST /api/chat` | Accepts `{"message":"...", "history":[{"role":"Student","text":"..."}]}` and returns `{"reply":"..."}`. Messages are limited to 500 characters and only the latest six history entries are used. |
+
+Set these variables in the Vercel project settings to enable the chatbot after deployment:
+
+```env
+CHATBOT_ENABLED=true
+GEMINI_API_KEY=your_gemini_key
+GEMINI_MODEL=gemini-flash-lite-latest
+```
+
+`GEMINI_MODEL` is optional; the chatbot defaults to `gemini-flash-lite-latest`. The production deployment currently has the chatbot enabled. After changing environment variables in Vercel, redeploy for them to take effect. To disable the widget, set `CHATBOT_ENABLED=false` and redeploy.
 
 ### Run locally
 
@@ -219,11 +255,12 @@ The response contains ranked results, deterministic match data, explanation/fall
 
 ## Deployment
 
-The project is configured for Vercel through `vercel.json`.
+The project is configured for Vercel through `vercel.json`. The production site is [pathora-ai-psi.vercel.app](https://pathora-ai-psi.vercel.app).
 
 1. Import the repository into Vercel.
 2. Add the environment variables from the configuration section in the project settings.
 3. Deploy. Test on a preview deployment before promoting to production.
+4. For the optional chatbot, set `CHATBOT_ENABLED=true` and configure `GEMINI_API_KEY` in the desired Vercel environment; redeploy after changing variables.
 
 ## Responsible AI
 
